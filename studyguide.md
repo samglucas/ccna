@@ -162,6 +162,48 @@ Prevents Layer 2 loop topologies in redundant networks by placing specific ports
     * `Gold`: Video traffic.
     * `Silver` (Default): Best-effort data.
     * `Bronze`: Low-priority guest access.
+ 
+## Cisco WLC GUI Architecture & Configuration Navigation Flow
+
+When you log into a Cisco WLC via HTTP/HTTPS, you are taken to a dashboard interface. To configure client connectivity, you must navigate through a specific sequence of tabs located at the top of the GUI:
+
+[ Monitor ] ──► [ WLANs ] ──► [ Controller ] ──► [ Wireless ] ──► [ Security ] ──► [ Management ]
+                    │
+            (Create New WLAN)
+
+### Step 1: The WLANs Tab (Creation & Mapping)
+This is where you initially build or modify a wireless network broadcast interface.
+* **WLANs > Create New:** You must specify the **Profile Name** (administrative tracking name) and the **SSID** (the actual text string broadcasted to user devices over the air).
+* **General Sub-Tab:**
+    * **Status Checkbox:** By default, a newly created WLAN is *Disabled*. You must explicitly check **Enabled** for the APs to start active beaconing and broadcasting the SSID.
+    * **Interface/Interface Group:** This maps the wireless network directly to a wired VLAN gateway (e.g., mapping the "Guest_SSID" to the internal dynamic `VLAN_100_Guest` interface).
+
+### Step 2: The Security Tab (Layer 2 vs. Layer 3 Encryption)
+Once the SSID is mapped to a back-end interface, navigate to the Security sub-tab to determine access restrictions. It is divided into sub-sections:
+* **Layer 2 Security Dropdown:**
+    * Changing this from *None* to **WPA+WPA2** or **WPA3** activates over-the-air privacy.
+    * **Auth Key Management (AKM):** Here you choose the deployment type:
+        * **PSK (Pre-Shared Key):** Used for personal/home setups. You must enter a text password (ASCII or Hex).
+        * **802.1X:** Used for Enterprise environments. This tells the WLC to forward client authentication requests outward to an external **AAA/RADIUS server** via a shared secret.
+* **Layer 3 Security Dropdown:** Used if you want to enforce a **Web Policy / Captive Portal** (typical for guest Wi-Fi networks where users must agree to terms or type a guest password on a browser webpage before getting internet access).
+
+### Step 3: The QoS Tab (Traffic Prioritization Profiles)
+This dropdown tab dictates how the WLC prioritizes different traffic classes using Wi-Fi Multimedia (WMM) markings. You must memorize these 4 distinct system profiles:
+* **Platinum (Voice):** Highest priority; explicitly reserved for time-sensitive voice-over-IP (VoIP) traffic lines.
+* **Gold (Video):** High priority; optimized for video streaming applications and low-latency conferencing tools.
+* **Silver (Best Effort):** The default setting; handles normal web browsing, file transfers, and general user data traffic.
+* **Bronze (Background):** Lowest priority; typical layout choice for guest networks or non-critical automated software backup traffic to ensure they do not choke corporate resources.
+
+### Step 4: The Advanced Tab (Specialized Features)
+This tab houses high-level features that change client optimization behaviors:
+* **FlexConnect Local Switching:** If you have lightweight APs at a remote branch site running in FlexConnect mode, checking this box allows the AP to bridge client data traffic straight into the local branch switch locally, rather than tunneling it back across the WAN to the central WLC.
+* **Aironet IE:** A Cisco-proprietary extension that communicates AP capabilities to Cisco wireless clients. If non-Cisco clients struggle to connect to an SSID, this is often the feature that needs to be disabled.
+
+### Wireless Client Association Process
+Before a wireless client can transmit data over an access point, it must complete this strict sequence:
+1.  **Discovery (Scanning):** The client listens for **Beacons** broadcast by the AP (Passive Scanning) or sends out **Probe Requests** looking for specific SSIDs (Active Scanning).
+2.  **Authentication:** The client proves identity to the AP via open-system or pre-shared key frame exchanges.
+3.  **Association:** The client sends an **Association Request** frame; the AP verifies capabilities and replies with an **Association Response** frame, assigning an Association ID to anchor the connection slot.
 
 ### Domain 2: Essential Commands
 * `show vlan brief` - Verify assigned VLAN groupings and active access ports.
